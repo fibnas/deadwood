@@ -1,10 +1,10 @@
 use std::fmt::{Display, Formatter};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    cards::{Card, HAND_SIZE, Rank, Suit},
+    cards::{Card, Rank, Suit, HAND_SIZE},
     meld::{analyze_hand, layoff_cards},
 };
 

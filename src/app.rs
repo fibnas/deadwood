@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::{
-    bot::{BotDifficulty, take_turn},
+    bot::{take_turn, BotDifficulty},
     game::{ActionOutcome, DrawSource, Game, PlayerId, TurnPhase},
 };
 

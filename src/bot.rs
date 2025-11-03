@@ -16,7 +16,7 @@ impl BotDifficulty {
     fn knock_threshold(self) -> u32 {
         match self {
             BotDifficulty::Easy => 6,
-            BotDifficulty::Challenging => 10,
+            BotDifficulty::Challenging => 8,
         }
     }
 }
@@ -81,7 +81,13 @@ fn choose_discard(game: &Game, difficulty: BotDifficulty) -> (usize, bool) {
     }
 
     let mut knock = false;
-    if best_deadwood <= difficulty.knock_threshold() {
+    let cards_played = game.discard.len().saturating_sub(1);
+    let remaining_stock = game.stock.len();
+    let late_round = cards_played >= 8 || remaining_stock <= 15;
+    let strong_hand = best_deadwood <= 3;
+
+    if best_deadwood <= difficulty.knock_threshold() && (late_round || strong_hand) {
+        // Hold off on marginal knocks until deeper in the round to keep them rare.
         let hypothetical = {
             let mut hand = game.bot.hand.clone();
             hand.remove(best_index);
