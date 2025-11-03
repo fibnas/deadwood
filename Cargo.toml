@@ -1,7 +1,17 @@
 [package]
 name = "deadwood"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+authors = ["Frank Stallion frank.stallion@ojefe.com"]
+description = "Gin Rummy TUI featuring full knock, gin, and undercut rules with an algorithmic bot opponent."
+license = "MIT"
+readme = "README.md"
+keywords = ["gin-rummy", "tui", "card-game", "terminal"]
+categories = ["games", "command-line-utilities"]
+
+[[bin]]
+name = "deadwood"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1"
