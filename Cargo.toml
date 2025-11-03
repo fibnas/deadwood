@@ -6,7 +6,7 @@ authors = ["Frank Stallion frank.stallion@ojefe.com"]
 description = "Gin Rummy TUI featuring full knock, gin, and undercut rules with an algorithmic bot opponent."
 license = "MIT"
 readme = "README.md"
-keywords = ["gin-rummy", "tui", "card-game", "terminal"]
+keywords = ["gin-rummy", "tui", "game", "terminal"]
 categories = ["games", "command-line-utilities"]
 
 [[bin]]
