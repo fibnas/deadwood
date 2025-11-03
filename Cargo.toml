@@ -1,6 +1,6 @@
 [package]
 name = "deadwood"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["Frank Stallion frank.stallion@ojefe.com"]
 description = "Gin Rummy TUI featuring full knock, gin, and undercut rules with an algorithmic bot opponent."

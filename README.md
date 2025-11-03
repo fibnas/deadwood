@@ -22,7 +22,7 @@ Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written 
 Clone the repository and build the project:
 
 ```bash
-git clone https://github.com/<your-org>/deadwood.git
+git clone https://github.com/fibnas/deadwood.git
 cd deadwood
 cargo build
 ```
