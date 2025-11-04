@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -8,9 +10,9 @@ use ratatui::{
 
 use crate::{
     app::App,
-    cards::Card,
+    cards::{Card, Suit},
     game::{PlayerId, TurnPhase},
-    meld::analyze_hand,
+    meld::{analyze_hand, MeldKind},
 };
 
 pub fn draw(frame: &mut Frame<'_>, app: &App) {
@@ -83,13 +85,6 @@ fn draw_piles(frame: &mut Frame<'_>, app: &App, area: Rect) {
         .split(area);
 
     let stock_size = app.game.stock.len();
-    let discard_top = app
-        .game
-        .discard
-        .last()
-        .map(|c| c.label())
-        .unwrap_or_else(|| "--".to_string());
-
     let stock_para = Paragraph::new(vec![
         Line::from("Stock pile"),
         Line::from(Span::styled(
@@ -107,7 +102,18 @@ fn draw_piles(frame: &mut Frame<'_>, app: &App, area: Rect) {
             format!("Cards: {}", app.game.discard.len()),
             Style::default().fg(Color::Yellow),
         )),
-        Line::from(format!("Top: {discard_top}")),
+        if let Some(card) = app.game.discard.last() {
+            Line::from(vec![
+                Span::raw("Top: "),
+                Span::styled(card.rank.short_name().to_string(), Style::default()),
+                Span::styled(
+                    card.suit.symbol().to_string(),
+                    Style::default().fg(suit_color(card.suit)),
+                ),
+            ])
+        } else {
+            Line::from("Top: --")
+        },
     ])
     .block(Block::default().title("Discard").borders(Borders::ALL))
     .alignment(Alignment::Center);
@@ -137,29 +143,76 @@ fn draw_player_hand(frame: &mut Frame<'_>, app: &App, area: Rect) {
         return;
     }
 
-    let spans: Vec<Span> = hand
-        .iter()
-        .enumerate()
-        .map(|(idx, card)| {
-            let label = card.label();
-            if idx == app.selection {
-                Span::styled(
-                    format!("[{label}]"),
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                )
-            } else {
-                Span::styled(format!(" {label} "), Style::default())
-            }
-        })
-        .collect();
+    let analysis = analyze_hand(hand);
+    let mut card_membership: HashMap<Card, MeldKind> = HashMap::new();
+    for meld in &analysis.melds {
+        for &card in &meld.cards {
+            card_membership.insert(card, meld.kind);
+        }
+    }
+
+    let selection_style = Style::default()
+        .fg(Color::Green)
+        .add_modifier(Modifier::BOLD);
+
+    let mut spans: Vec<Span> = Vec::new();
+
+    for (idx, card) in hand.iter().enumerate() {
+        if idx > 0 {
+            spans.push(Span::raw(" "));
+        }
+
+        let is_selected = idx == app.selection;
+        if is_selected {
+            spans.push(Span::styled("[", selection_style));
+        }
+
+        let bracket_kind = card_membership.get(card).copied();
+        let (open_char, close_char, bracket_style) = match bracket_kind {
+            Some(MeldKind::Run) => (Some('('), Some(')'), Style::default().fg(Color::Cyan)),
+            Some(MeldKind::Set) => (Some('{'), Some('}'), Style::default().fg(Color::Yellow)),
+            None => (None, None, Style::default()),
+        };
+
+        if let Some(open) = open_char {
+            spans.push(Span::styled(open.to_string(), bracket_style));
+        }
+
+        let mut rank_style = Style::default();
+        if is_selected {
+            rank_style = rank_style.fg(Color::Green).add_modifier(Modifier::BOLD);
+        }
+        spans.push(Span::styled(card.rank.short_name().to_string(), rank_style));
+
+        let mut suit_style = Style::default().fg(suit_color(card.suit));
+        if is_selected {
+            suit_style = suit_style.add_modifier(Modifier::BOLD);
+        }
+        spans.push(Span::styled(card.suit.symbol().to_string(), suit_style));
+
+        if let Some(close) = close_char {
+            spans.push(Span::styled(close.to_string(), bracket_style));
+        }
+
+        if is_selected {
+            spans.push(Span::styled("]", selection_style));
+        }
+    }
 
     let line = Line::from(spans);
     let paragraph = Paragraph::new(line)
         .block(Block::default().title("Your Hand").borders(Borders::ALL))
         .alignment(Alignment::Center);
     frame.render_widget(paragraph, area);
+}
+
+fn suit_color(suit: Suit) -> Color {
+    match suit {
+        Suit::Hearts => Color::Red,
+        Suit::Diamonds => Color::Magenta,
+        Suit::Clubs => Color::Green,
+        Suit::Spades => Color::Blue,
+    }
 }
 
 fn draw_player_details(frame: &mut Frame<'_>, app: &App, area: Rect) {

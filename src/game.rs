@@ -8,6 +8,8 @@ use crate::{
     meld::{analyze_hand, layoff_cards},
 };
 
+const BIG_GIN_BONUS: i32 = 31;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerId {
     Human,
@@ -68,6 +70,11 @@ pub enum RoundEndReason {
         gin: bool,
         undercut: bool,
     },
+    BigGin {
+        player: PlayerId,
+        opponent_deadwood: u32,
+        bonus: i32,
+    },
     StockDepleted,
 }
 
@@ -122,6 +129,18 @@ impl Display for RoundResult {
                     )
                 }
             }
+            RoundEndReason::BigGin {
+                player,
+                opponent_deadwood,
+                bonus,
+            } => write!(
+                f,
+                "{} hit Big Gin and scores {} points (opponent deadwood {}, bonus {}).",
+                name(*player),
+                self.points_awarded,
+                opponent_deadwood,
+                bonus
+            ),
             RoundEndReason::StockDepleted => write!(f, "Round ended in a draw: stock depleted."),
         }
     }
@@ -216,8 +235,37 @@ impl Game {
                 .ok_or_else(|| anyhow!("discard pile empty"))?,
         };
 
-        self.player_mut(player).hand.push(card);
-        self.player_mut(player).sort_hand();
+        {
+            let player_ref = self.player_mut(player);
+            player_ref.hand.push(card);
+            player_ref.sort_hand();
+        }
+
+        if self.player(player).hand.len() == HAND_SIZE + 1 {
+            let analysis = analyze_hand(&self.player(player).hand);
+            if analysis.deadwood_value == 0 {
+                let opponent = player.other();
+                let opponent_analysis = analyze_hand(&self.player(opponent).hand);
+                let opponent_deadwood_value: u32 = opponent_analysis
+                    .deadwood
+                    .iter()
+                    .map(|c| c.rank.value() as u32)
+                    .sum();
+                let points = opponent_deadwood_value as i32 + BIG_GIN_BONUS;
+                let result = RoundResult {
+                    winner: Some(player),
+                    points_awarded: points,
+                    reason: RoundEndReason::BigGin {
+                        player,
+                        opponent_deadwood: opponent_deadwood_value,
+                        bonus: BIG_GIN_BONUS,
+                    },
+                };
+                self.finish_round(result);
+                return Ok(ActionOutcome::RoundEnded);
+            }
+        }
+
         self.phase = TurnPhase::AwaitDiscard;
         Ok(ActionOutcome::Continue)
     }

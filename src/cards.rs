@@ -102,6 +102,7 @@ impl Card {
         Self { rank, suit }
     }
 
+    #[allow(dead_code)]
     pub fn label(self) -> String {
         format!("{}{}", self.rank.short_name(), self.suit.symbol())
     }
