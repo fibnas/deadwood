@@ -2,7 +2,7 @@
 
 Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written in Rust. It delivers a full single–player experience against an algorithmic bot, complete with proper Gin scoring, knock/deadwood rules, and a responsive Crossterm/Ratatui front end.
 
-[![Crates.io](https://img.shields.io/crates/v/md-echo.svg)](https://crates.io/crates/deadwood)
+[![Crates.io](https://img.shields.io/crates/v/deadwood.svg)](https://crates.io/crates/deadwood)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange.svg)](https://www.rust-lang.org)
 
