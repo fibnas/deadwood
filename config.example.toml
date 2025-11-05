@@ -1,0 +1,29 @@
+# Toggle whether game results persist between runs.
+persist_stats = true
+
+# Automatically wrap melds with brackets in the UI.
+auto_brackets = true
+
+[suit_colors]
+# Use any recognised name (red, blue, etc.), hex code, or rgb() value.
+hearts = "Red"
+diamonds = "Magenta"
+clubs = "Green"
+spades = "Blue"
+
+#[suit_colors]
+# neon crimson / hot pink
+#hearts   = "#FF005D" 
+# neon cyan
+#diamonds = "#00F0FF" 
+# laser green
+#clubs    = "#39FF14" 
+# ultraviolet violet
+#spades   = "#A200FF" 
+
+
+# [suit_colors]
+# hearts   = "rgb(255, 0, 93)"
+# diamonds = "rgb(0, 240, 255)"
+# clubs    = "rgb(57, 255, 20)"
+# spades   = "rgb(162, 0, 255)"

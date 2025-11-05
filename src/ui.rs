@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::{
     app::App,
-    cards::{Card, Suit},
+    cards::Card,
     game::{PlayerId, TurnPhase},
     meld::{analyze_hand, MeldKind},
 };
@@ -39,6 +39,10 @@ fn draw_header(frame: &mut Frame<'_>, app: &App, area: Rect) {
         Line::from(format!(
             "Score: You {} | Bot {} (Rounds played: {})",
             scoreboard.human, scoreboard.bot, scoreboard.rounds_played
+        )),
+        Line::from(format!(
+            "Hands: You {} | Bot {} | Draws {}",
+            scoreboard.human_hands_won, scoreboard.bot_hands_won, scoreboard.draws
         )),
         Line::from(format!("Phase: {phase_text}")),
     ];
@@ -108,7 +112,7 @@ fn draw_piles(frame: &mut Frame<'_>, app: &App, area: Rect) {
                 Span::styled(card.rank.short_name().to_string(), Style::default()),
                 Span::styled(
                     card.suit.symbol().to_string(),
-                    Style::default().fg(suit_color(card.suit)),
+                    Style::default().fg(app.suit_color(card.suit)),
                 ),
             ])
         } else {
@@ -134,6 +138,7 @@ fn draw_player_section(frame: &mut Frame<'_>, app: &App, area: Rect) {
 
 fn draw_player_hand(frame: &mut Frame<'_>, app: &App, area: Rect) {
     let hand = &app.game.human.hand;
+    let recent_draw = app.recent_draw();
 
     if hand.is_empty() {
         let paragraph = Paragraph::new("Your hand is empty.")
@@ -163,11 +168,16 @@ fn draw_player_hand(frame: &mut Frame<'_>, app: &App, area: Rect) {
         }
 
         let is_selected = idx == app.selection;
+        let is_recent = Some(*card) == recent_draw;
         if is_selected {
             spans.push(Span::styled("[", selection_style));
         }
 
-        let bracket_kind = card_membership.get(card).copied();
+        let bracket_kind = if app.auto_brackets() {
+            card_membership.get(card).copied()
+        } else {
+            None
+        };
         let (open_char, close_char, bracket_style) = match bracket_kind {
             Some(MeldKind::Run) => (Some('('), Some(')'), Style::default().fg(Color::Cyan)),
             Some(MeldKind::Set) => (Some('{'), Some('}'), Style::default().fg(Color::Yellow)),
@@ -179,12 +189,18 @@ fn draw_player_hand(frame: &mut Frame<'_>, app: &App, area: Rect) {
         }
 
         let mut rank_style = Style::default();
+        if is_recent {
+            rank_style = rank_style.bg(Color::DarkGray);
+        }
         if is_selected {
             rank_style = rank_style.fg(Color::Green).add_modifier(Modifier::BOLD);
         }
         spans.push(Span::styled(card.rank.short_name().to_string(), rank_style));
 
-        let mut suit_style = Style::default().fg(suit_color(card.suit));
+        let mut suit_style = Style::default().fg(app.suit_color(card.suit));
+        if is_recent {
+            suit_style = suit_style.bg(Color::DarkGray);
+        }
         if is_selected {
             suit_style = suit_style.add_modifier(Modifier::BOLD);
         }
@@ -205,16 +221,6 @@ fn draw_player_hand(frame: &mut Frame<'_>, app: &App, area: Rect) {
         .alignment(Alignment::Center);
     frame.render_widget(paragraph, area);
 }
-
-fn suit_color(suit: Suit) -> Color {
-    match suit {
-        Suit::Hearts => Color::Red,
-        Suit::Diamonds => Color::Magenta,
-        Suit::Clubs => Color::Green,
-        Suit::Spades => Color::Blue,
-    }
-}
-
 fn draw_player_details(frame: &mut Frame<'_>, app: &App, area: Rect) {
     let mut lines = Vec::new();
     if let TurnPhase::AwaitDiscard = app.game.phase {
@@ -236,6 +242,10 @@ fn draw_player_details(frame: &mut Frame<'_>, app: &App, area: Rect) {
 }
 
 fn phase_description(app: &App) -> String {
+    if app.exit_prompt_active() {
+        return "Exit requested: choose Y to save, N to quit without saving, Esc to cancel."
+            .to_string();
+    }
     match app.game.phase {
         TurnPhase::RoundOver => "Round complete. Press Enter to continue.".to_string(),
         TurnPhase::AwaitDraw => match app.game.current_player {
@@ -250,6 +260,9 @@ fn phase_description(app: &App) -> String {
 }
 
 fn instructions_for_phase(app: &App) -> String {
+    if app.exit_prompt_active() {
+        return "Controls: Y=save & quit, N=quit without saving, Esc=cancel.".to_string();
+    }
     match app.game.phase {
         TurnPhase::RoundOver => "Controls: Enter/N to start next round, Q to quit.".to_string(),
         TurnPhase::AwaitDraw => "Controls: S=draw stock, D=draw discard, Q=quit.".to_string(),

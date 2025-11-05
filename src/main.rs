@@ -9,8 +9,10 @@ use ratatui::{backend::CrosstermBackend, Terminal};
 mod app;
 mod bot;
 mod cards;
+mod config;
 mod game;
 mod meld;
+mod storage;
 mod ui;
 
 use app::App;

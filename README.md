@@ -2,10 +2,15 @@
 
 Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written in Rust. It delivers a full single–player experience against an algorithmic bot, complete with proper Gin scoring, knock/deadwood rules, and a responsive Crossterm/Ratatui front end.
 
+[![Crates.io](https://img.shields.io/crates/v/md-echo.svg)](https://crates.io/crates/deadwood)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-stable-orange.svg)](https://www.rust-lang.org)
+
 ## Highlights
 
 - **Playable Gin Rummy**: Standard 52-card deck, 10-card hands, draw/discard flow, knock/Gin/undercut scoring, and deadwood tracking.
-- **Responsive TUI**: Crossterm + Ratatui interface shows both hands (opponent face-down), stock/discard piles, scoreboard, contextual controls, and live deadwood totals.
+- **Responsive TUI**: Crossterm + Ratatui interface shows both hands (opponent face-down), stock/discard piles, scoreboard (points plus hands won), contextual controls, and live deadwood totals.
+- **Session Awareness**: Optional persistence keeps score/history between runs, highlights your most recent draw, and exposes simple configuration knobs.
 - **Bot Opponent**: Deterministic heuristics with difficulty setting baked into the game core; the AI evaluates meld potential, knock opportunities, and throws in occasional randomness on easier settings.
 - **Pure Rust**: No external game logic crates—cards, deck building, meld search, deadwood analysis, and scoring are all homegrown and unit-test friendly.
 
@@ -34,6 +39,16 @@ cargo run
 ```
 
 The game launches directly into the TUI. Resize the terminal as needed; Ratatui adapts to larger viewports.
+
+### Configuration & Persistence
+
+On first launch Deadwood writes a config file to your OS config directory (for example `~/.config/deadwood/config.toml`). You can tweak these options:
+
+- `persist_stats` – keep cumulative scores and the latest round summaries between runs (creates `session.json` alongside the config).
+- `auto_brackets` – toggle automatic braces around detected melds/runs in your hand view.
+- `[suit_colors]` – override suit colours with recognised names (`Red`, `Blue`, …), `#RRGGBB` hex strings, or `rgb(r,g,b)` values.
+
+There is a starter template at [`config.example.toml`](config.example.toml); copy or adapt it for your setup.
 
 ## Controls
 

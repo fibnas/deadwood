@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::{anyhow, Result};
 use rand::{seq::SliceRandom, thread_rng};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     cards::{Card, Rank, Suit, HAND_SIZE},
@@ -53,11 +54,14 @@ impl Player {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Scoreboard {
     pub human: i32,
     pub bot: i32,
     pub rounds_played: u32,
+    pub human_hands_won: u32,
+    pub bot_hands_won: u32,
+    pub draws: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -363,10 +367,17 @@ impl Game {
     }
 
     pub fn finish_round(&mut self, result: RoundResult) {
-        if let Some(winner) = result.winner {
-            match winner {
-                PlayerId::Human => self.scoreboard.human += result.points_awarded,
-                PlayerId::Bot => self.scoreboard.bot += result.points_awarded,
+        match result.winner {
+            Some(PlayerId::Human) => {
+                self.scoreboard.human += result.points_awarded;
+                self.scoreboard.human_hands_won += 1;
+            }
+            Some(PlayerId::Bot) => {
+                self.scoreboard.bot += result.points_awarded;
+                self.scoreboard.bot_hands_won += 1;
+            }
+            None => {
+                self.scoreboard.draws += 1;
             }
         }
         self.scoreboard.rounds_played += 1;
