@@ -1,13 +1,18 @@
 [package]
 name = "deadwood"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
-authors = ["Frank Stallion frank.stallion@ojefe.com"]
+authors = ["Frank Stallion <frank.stallion@ojefe.com>"]
 description = "Gin Rummy TUI featuring full knock, gin, and undercut rules with an algorithmic bot opponent."
 license = "MIT"
 readme = "README.md"
 keywords = ["gin-rummy", "tui", "game", "terminal"]
 categories = ["games", "command-line-utilities"]
+
+# These silence that warning:
+repository = "https://github.com/fn/deadwood"
+homepage = "https://github.com/fn/deadwood"
+documentation = "https://docs.rs/deadwood"
 
 [[bin]]
 name = "deadwood"
@@ -23,3 +28,4 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "0.8"
 dirs = "5"
+
