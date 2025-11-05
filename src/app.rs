@@ -32,6 +32,7 @@ pub struct App {
     exit_prompt: Option<ExitPrompt>,
     round_history: Vec<RoundSummary>,
     recent_draw: Option<Card>,
+    show_help: bool,
 }
 
 impl App {
@@ -67,6 +68,7 @@ impl App {
             exit_prompt: None,
             round_history: Vec::new(),
             recent_draw: None,
+            show_help: false,
         };
 
         let mut info_messages = Vec::new();
@@ -88,6 +90,22 @@ impl App {
             info_messages.push(format!(
                 "Loaded session data ({} rounds).",
                 app.game.scoreboard.rounds_played
+            ));
+        }
+
+        if app.game.scoreboard.rounds_played == 0 {
+            let draw = app.game.opening_draw();
+            app.game
+                .restart_with_starting_player(draw.starter)
+                .context("failed to apply opening draw")?;
+            app.recent_draw = None;
+            let starter_label = match draw.starter {
+                PlayerId::Human => "You",
+                PlayerId::Bot => "Bot",
+            };
+            info_messages.push(format!(
+                "Opening draw: You drew {}, Bot drew {}. {starter_label} will begin.",
+                draw.human_card, draw.bot_card
             ));
         }
 
@@ -124,6 +142,10 @@ impl App {
     }
 
     pub fn update(&mut self) -> Result<()> {
+        if self.show_help {
+            return Ok(());
+        }
+
         if self.exit_prompt.is_some() || self.game.phase == TurnPhase::RoundOver {
             return Ok(());
         }
@@ -145,7 +167,24 @@ impl App {
     }
 
     pub fn handle_key(&mut self, key_event: KeyEvent) -> Result<()> {
+        if self.show_help {
+            match key_event.code {
+                KeyCode::Esc | KeyCode::Char('?') => {
+                    self.show_help = false;
+                    self.message = Some("Returned to the game.".to_string());
+                }
+                _ => {}
+            }
+            return Ok(());
+        }
+
         if self.process_exit_prompt(key_event)? {
+            return Ok(());
+        }
+
+        if let KeyCode::Char('?') = key_event.code {
+            self.show_help = true;
+            self.message = Some("Gin Rummy rules open. Press Esc or ? to close.".to_string());
             return Ok(());
         }
 
@@ -383,5 +422,9 @@ impl App {
 
     pub fn recent_draw(&self) -> Option<Card> {
         self.recent_draw
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.show_help
     }
 }

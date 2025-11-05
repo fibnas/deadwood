@@ -87,6 +87,8 @@ pub struct RoundResult {
     pub winner: Option<PlayerId>,
     pub points_awarded: i32,
     pub reason: RoundEndReason,
+    pub human_hand: Vec<Card>,
+    pub bot_hand: Vec<Card>,
 }
 
 impl Display for RoundResult {
@@ -107,6 +109,7 @@ impl Display for RoundResult {
             } => {
                 let winner_name = self.winner.map(name).unwrap_or("Nobody");
                 let knocker_name = name(*knocker);
+                let layoff_label = describe_layoffs(laid_off);
 
                 if *gin {
                     write!(
@@ -114,13 +117,13 @@ impl Display for RoundResult {
                         "{knocker_name} got Gin and scores {} points (opponent deadwood {}, laid off {}).",
                         self.points_awarded,
                         opponent_deadwood,
-                        laid_off.len()
+                        layoff_label
                     )
                 } else if *undercut {
                     write!(
                         f,
-                        "Undercut! {winner_name} scores {} points (knocker deadwood {}, opponent deadwood {}).",
-                        self.points_awarded, knocker_deadwood, opponent_deadwood
+                        "Undercut! {winner_name} scores {} points (knocker deadwood {}, opponent deadwood {}, laid off {}).",
+                        self.points_awarded, knocker_deadwood, opponent_deadwood, layoff_label
                     )
                 } else {
                     write!(
@@ -129,7 +132,7 @@ impl Display for RoundResult {
                         self.points_awarded,
                         opponent_deadwood,
                         knocker_deadwood,
-                        laid_off.len()
+                        layoff_label
                     )
                 }
             }
@@ -161,6 +164,7 @@ pub struct Game {
     pub phase: TurnPhase,
     pub scoreboard: Scoreboard,
     pub pending_round: Option<RoundResult>,
+    pub last_round_winner: Option<PlayerId>,
 }
 
 impl Game {
@@ -175,6 +179,7 @@ impl Game {
             phase: TurnPhase::AwaitDraw,
             scoreboard: Scoreboard::default(),
             pending_round: None,
+            last_round_winner: None,
         };
 
         game.start_round()?;
@@ -208,6 +213,11 @@ impl Game {
         Ok(())
     }
 
+    pub fn restart_with_starting_player(&mut self, starter: PlayerId) -> Result<()> {
+        self.dealer = starter.other();
+        self.start_round()
+    }
+
     fn draw_from_stock(&mut self) -> Result<Card> {
         self.stock
             .pop()
@@ -226,6 +236,8 @@ impl Game {
                 winner: None,
                 points_awarded: 0,
                 reason: RoundEndReason::StockDepleted,
+                human_hand: self.human.hand.clone(),
+                bot_hand: self.bot.hand.clone(),
             };
             self.finish_round(result);
             return Ok(ActionOutcome::RoundEnded);
@@ -264,6 +276,8 @@ impl Game {
                         opponent_deadwood: opponent_deadwood_value,
                         bonus: BIG_GIN_BONUS,
                     },
+                    human_hand: self.human.hand.clone(),
+                    bot_hand: self.bot.hand.clone(),
                 };
                 self.finish_round(result);
                 return Ok(ActionOutcome::RoundEnded);
@@ -361,6 +375,8 @@ impl Game {
                 gin,
                 undercut,
             },
+            human_hand: self.human.hand.clone(),
+            bot_hand: self.bot.hand.clone(),
         };
 
         Ok(result)
@@ -371,13 +387,19 @@ impl Game {
             Some(PlayerId::Human) => {
                 self.scoreboard.human += result.points_awarded;
                 self.scoreboard.human_hands_won += 1;
+                self.dealer = PlayerId::Bot;
+                self.last_round_winner = Some(PlayerId::Human);
             }
             Some(PlayerId::Bot) => {
                 self.scoreboard.bot += result.points_awarded;
                 self.scoreboard.bot_hands_won += 1;
+                self.dealer = PlayerId::Human;
+                self.last_round_winner = Some(PlayerId::Bot);
             }
             None => {
                 self.scoreboard.draws += 1;
+                self.dealer = self.dealer.other();
+                self.last_round_winner = None;
             }
         }
         self.scoreboard.rounds_played += 1;
@@ -389,7 +411,6 @@ impl Game {
         if self.phase != TurnPhase::RoundOver {
             return Err(anyhow!("round still in progress"));
         }
-        self.dealer = self.dealer.other();
         self.start_round()
     }
 
@@ -427,4 +448,51 @@ fn build_deck() -> Vec<Card> {
         }
     }
     deck
+}
+
+fn describe_layoffs(cards: &[Card]) -> String {
+    if cards.is_empty() {
+        return "none".to_string();
+    }
+    let labels: Vec<String> = cards.iter().map(|c| c.to_string()).collect();
+    labels.join(" ")
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct OpeningDrawResult {
+    pub human_card: Card,
+    pub bot_card: Card,
+    pub starter: PlayerId,
+}
+
+impl Game {
+    pub fn opening_draw(&self) -> OpeningDrawResult {
+        let mut deck = build_deck();
+        let mut rng = thread_rng();
+        deck.shuffle(&mut rng);
+
+        loop {
+            if deck.len() < 2 {
+                deck = build_deck();
+                deck.shuffle(&mut rng);
+            }
+            let human_card = deck.pop().unwrap();
+            let bot_card = deck.pop().unwrap();
+            let human_val = human_card.rank.value();
+            let bot_val = bot_card.rank.value();
+            if human_val == bot_val {
+                continue;
+            }
+            let starter = if human_val > bot_val {
+                PlayerId::Human
+            } else {
+                PlayerId::Bot
+            };
+            return OpeningDrawResult {
+                human_card,
+                bot_card,
+                starter,
+            };
+        }
+    }
 }

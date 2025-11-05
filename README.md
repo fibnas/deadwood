@@ -11,6 +11,7 @@ Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written 
 - **Playable Gin Rummy**: Standard 52-card deck, 10-card hands, draw/discard flow, knock/Gin/undercut scoring, and deadwood tracking.
 - **Responsive TUI**: Crossterm + Ratatui interface shows both hands (opponent face-down), stock/discard piles, scoreboard (points plus hands won), contextual controls, and live deadwood totals.
 - **Session Awareness**: Optional persistence keeps score/history between runs, highlights your most recent draw, and exposes simple configuration knobs.
+- **Round Reveals**: When a hand ends the opponent's cards flip up, and the status panel lists any layoff cards so you can review how the knock resolved.
 - **Bot Opponent**: Deterministic heuristics with difficulty setting baked into the game core; the AI evaluates meld potential, knock opportunities, and throws in occasional randomness on easier settings.
 - **Pure Rust**: No external game logic crates—cards, deck building, meld search, deadwood analysis, and scoring are all homegrown and unit-test friendly.
 
@@ -56,15 +57,16 @@ Game controls change depending on the current phase, and the status panel always
 
 | Phase                | Keys                                                                 |
 | -------------------- | -------------------------------------------------------------------- |
-| Menu / Round over    | `Enter` or `n` – start next round · `q` / `Esc` – quit               |
-| Draw phase           | `s` – draw from stock · `d` – draw from discard · `q` / `Esc` – quit |
-| Discard / knock phase| `←`/`→` or `h`/`l` – move selector · `Enter`/`Space` – discard · `k` – toggle knock intent · `q` / `Esc` – quit |
+| Menu / Round over    | `Enter`/`n` – start next round · `?` – rules · `q`/`Esc` – quit       |
+| Draw phase           | `s` – draw stock · `d` – draw discard · `?` – rules · `q`/`Esc` – quit |
+| Discard / knock phase| `←`/`→` or `h`/`l` – move selector · `Enter`/`Space` – discard · `k` – toggle knock intent · `?` – rules · `q`/`Esc` – quit |
 
 ## Rules & Scoring
 
 Deadwood follows standard Gin Rummy rules:
 
 - Players are dealt 10 cards. The non-dealer starts after the first discard is revealed.
+- The previous round's winner draws first; on a fresh game a quick high-card draw decides the opener.
 - Each turn consists of drawing (stock or discard) and discarding one card.
 - A player may **knock** when their deadwood total is 10 or fewer points. Picking a discard does not oblige you to knock.
 - A player gets **Gin** when they knock with zero deadwood and receives an additional 25-point bonus.
