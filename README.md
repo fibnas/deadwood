@@ -6,6 +6,8 @@ Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange.svg)](https://www.rust-lang.org)
 
+<img width="1057" height="555" alt="deadwood" src="https://github.com/user-attachments/assets/2b662d77-2c97-4de3-b22e-c0d39316c882" />
+
 ## Highlights
 
 - **Playable Gin Rummy**: Standard 52-card deck, 10-card hands, draw/discard flow, knock/Gin/undercut scoring, and deadwood tracking.
@@ -14,8 +16,6 @@ Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written 
 - **Round Reveals**: When a hand ends the opponent's cards flip up, and the status panel lists any layoff cards so you can review how the knock resolved.
 - **Bot Opponent**: Deterministic heuristics with difficulty setting baked into the game core; the AI evaluates meld potential, knock opportunities, and throws in occasional randomness on easier settings.
 - **Pure Rust**: No external game logic crates—cards, deck building, meld search, deadwood analysis, and scoring are all homegrown and unit-test friendly.
-
-<img width="1057" height="555" alt="deadwood" src="https://github.com/user-attachments/assets/2b662d77-2c97-4de3-b22e-c0d39316c882" />
 
 ## Getting Started
 
