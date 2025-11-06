@@ -15,6 +15,8 @@ Deadwood is a terminal user interface (TUI) implementation of Gin Rummy written 
 - **Bot Opponent**: Deterministic heuristics with difficulty setting baked into the game core; the AI evaluates meld potential, knock opportunities, and throws in occasional randomness on easier settings.
 - **Pure Rust**: No external game logic crates—cards, deck building, meld search, deadwood analysis, and scoring are all homegrown and unit-test friendly.
 
+<img width="1057" height="555" alt="deadwood" src="https://github.com/user-attachments/assets/2b662d77-2c97-4de3-b22e-c0d39316c882" />
+
 ## Getting Started
 
 ### Prerequisites
